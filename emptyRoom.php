@@ -55,6 +55,7 @@ switch ($_GET['sectionNum']) {
 
 
 $url = "http://jwzx.cqupt.edu.cn/jwzxTmp/showEmptyRoomResult.php?zc=" . $_GET['week'] . "&xq=" . $_GET['weekdayNum'] . "&sd=" . $_GET['sectionNum'];
+//$url="http://jwzx.cqupt.edu.cn/jwzxTmp/showEmptyRoomResult.php?zc=20&xq=7&sd=ab";
 $conn = curl_init($url);
 $useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
 $configArray = array(
