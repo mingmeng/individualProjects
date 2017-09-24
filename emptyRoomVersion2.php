@@ -258,6 +258,9 @@ $classroom['8'] = array("8111",
     "8324",
     "8331",
     "8332");
+$classroom = array_merge($classroom['2'], $classroom['3'], $classroom['4'], $classroom['5'], $classroom['8']);
+sort($classroom);
+
 const version = '1.0.0';
 const term = '20179';
 
@@ -274,10 +277,7 @@ function result($status, $info, $output, $request)
     exit(json_encode($data));
 }
 
-//$_GET['buildNum'] = 2;
-//$_GET['sectionNum'] = 0;
-//$_GET['week']=2;
-//$_GET['weekDayNum']=5;
+
 $mapping = array(
     array(1, 2),
     array(3, 4),
@@ -287,10 +287,14 @@ $mapping = array(
     array(11, 12)
 );
 require_once "result.php";
+require_once "database.php";
+set_time_limit(0);
 
 $resultSet = array();
+$conn = new PDO(database::linkConfig, database::userName, database::password);
+$insert = $conn->prepare("INSERT INTO `cyxbsmobile_emptyroom` (`classroom`,`week`,`weekday`,`timeBucket`,`building_num`) VALUES (?,?,?,?,?)");
 
-foreach ($classroom[$_GET['buildNum']] as $eachValue) {
+foreach ($classroom as $eachValue) {
     $url = "http://jwzx.cqupt.edu.cn/jwzxtmp/kebiao/kb_room.php?room=" . $eachValue;
     $conn = curl_init($url);
     $useragent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
@@ -338,20 +342,39 @@ foreach ($classroom[$_GET['buildNum']] as $eachValue) {
         $i++;
     }
 
-
-    $isSetFlag = 0;
-    foreach ($temp as $value) {
-        if ($_GET['weekdayNum'] == $value['weekday']
-            && in_array($mapping[$_GET['sectionNum']][0], $value['timeBucket'])
-            && in_array($mapping[$_GET['sectionNum']][1], $value['timeBucket'])
-            && in_array($_GET['week'], $value['week'])) {
-            $isSetFlag = 1;
-            break;
+    $test = array();
+    foreach ($temp as $record) {
+        for ($i = 0; $i < count($record['week']); $i++) {
+            for ($j = 0; $j < count($record['timeBucket']); $j++) {
+                array_push($test, array(
+                    'classroom' => $eachValue,
+                    'week' => $record['week'][$i],
+                    'weekday' => $record['weekday'],
+                    'timeBucket' => $record['timeBucket'][$j]
+                ));
+                $insert->bindValue(1, $eachValue, PDO::PARAM_INT);
+                $insert->bindValue(2, $record['week'][$i], PDO::PARAM_INT);
+                $insert->bindValue(3, $record['weekday'], PDO::PARAM_INT);
+                $insert->bindValue(4, $record['timeBucket'][$j], PDO::PARAM_INT);
+                $insert->bindValue(5, ($eachValue - $eachValue % 1000) / 1000);
+                $insert->execute();
+            }
         }
     }
-    if ($isSetFlag == 0)
-        array_push($resultSet, $eachValue);
+
+//    $isSetFlag = 0;
+//    foreach ($temp as $value) {
+//        if ($_GET['weekdayNum'] == $value['weekday']
+//            && in_array($mapping[$_GET['sectionNum']][0], $value['timeBucket'])
+//            && in_array($mapping[$_GET['sectionNum']][1], $value['timeBucket'])
+//            && in_array($_GET['week'], $value['week'])) {
+//            $isSetFlag = 1;
+//            break;
+//        }
+//    }
+//    if ($isSetFlag == 0)
+//        array_push($resultSet, $eachValue);
 }
 
 
-result(200,'success',$resultSet,$_GET);
+//result(200, 'success', $resultSet, $_GET);
