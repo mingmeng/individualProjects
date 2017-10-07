@@ -20,7 +20,7 @@ require_once "result.php";
 $data = new result();
 $databaseConnection = new PDO(database::linkConfig, database::userName, database::password);
 
-if (isset($_POST['pic_num'])) {
+if ($_SERVER['REQUEST_METHOD']=="POST") {
     try {
 
         if ($_POST['pic_num'] == null) {
@@ -41,6 +41,8 @@ if (isset($_POST['pic_num'])) {
         $result = $prepareQuery->fetchAll(PDO::FETCH_ASSOC);
         $i = 0;
         while ($i < count($result)) {
+            if ($result[$i]['picture_goto_url']=='')
+                $result[$i]['picture_goto_url']=null;
             $data->data[$i] = $result[$i];
             $i++;
         }
